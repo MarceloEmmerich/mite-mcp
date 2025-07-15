@@ -100,7 +100,54 @@ MITE_PASSWORD=your-password
 - `update_service` - Update a service (admin only)
 - `delete_service` - Delete a service (admin only)
 
-## Usage with Claude Desktop
+## Usage
+
+### MCP Server Modes
+
+The mite MCP server supports two modes:
+
+#### 1. Stdio Mode (Default)
+For use with Claude Desktop and other MCP clients that use stdio transport:
+
+```bash
+# Default stdio mode
+npx @marceloemmerich/mite-mcp
+
+# Explicitly specify stdio mode
+npx @marceloemmerich/mite-mcp --stdio
+```
+
+#### 2. HTTP/Streamable Mode
+For web-based clients or testing environments:
+
+```bash
+# HTTP/Streamable mode on default port 3000
+npx @marceloemmerich/mite-mcp --http
+
+# HTTP/Streamable mode on custom port and host
+npx @marceloemmerich/mite-mcp --http --port 8080 --host 0.0.0.0
+```
+
+**HTTP Endpoints:**
+- `POST /` - Handles MCP JSON-RPC requests
+- `GET /` - Establishes SSE stream (requires Mcp-Session-Id header)
+- `DELETE /` - Terminates session (requires Mcp-Session-Id header)
+
+### CLI Options
+
+```bash
+mite-mcp [options]
+
+Options:
+  -V, --version      output the version number
+  --stdio            Run in stdio mode (default)
+  --http             Run in HTTP/Streamable mode
+  -p, --port <port>  Port for HTTP server (default: 3000)
+  -h, --host <host>  Host for HTTP server (default: localhost)
+  --help             display help for command
+```
+
+### Claude Desktop Configuration
 
 Add to your Claude Desktop configuration:
 
@@ -110,6 +157,24 @@ Add to your Claude Desktop configuration:
     "mite": {
       "command": "npx",
       "args": ["@marceloemmerich/mite-mcp"],
+      "env": {
+        "MITE_ACCOUNT_NAME": "your-account-name",
+        "MITE_API_KEY": "your-api-key"
+      }
+    }
+  }
+}
+```
+
+For development testing with Claude Desktop, you can also use:
+
+```json
+{
+  "mcpServers": {
+    "mite-dev": {
+      "command": "node",
+      "args": ["dist/index.js"],
+      "cwd": "/path/to/mite-mcp",
       "env": {
         "MITE_ACCOUNT_NAME": "your-account-name",
         "MITE_API_KEY": "your-api-key"
@@ -129,14 +194,58 @@ cd mite-mcp
 # Install dependencies
 npm install
 
-# Run in development mode
+# Run in development mode (stdio)
 npm run dev
+
+# Run in HTTP/Streamable mode for testing
+npm run dev -- --http --port 3000
 
 # Run tests
 npm test
 
+# Run tests with coverage
+npm run test:coverage
+
 # Build for production
 npm run build
+
+# Lint and format code
+npm run lint:fix
+```
+
+### Testing HTTP/Streamable Mode
+
+For testing the HTTP/Streamable server mode, you can use tools like:
+
+```bash
+# Test initialization (this will return a session ID)
+curl -X POST http://localhost:3000/ \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{"roots":{"listChanged":true},"sampling":{}}},"id":1}'
+
+# Test with session ID (replace SESSION_ID with the actual session ID from initialization)
+curl -X GET http://localhost:3000/ \
+  -H "Mcp-Session-Id: SESSION_ID"
+```
+
+### Development with Claude Desktop
+
+For local development, update your Claude Desktop config:
+
+```json
+{
+  "mcpServers": {
+    "mite-dev": {
+      "command": "npm",
+      "args": ["run", "dev"],
+      "cwd": "/path/to/mite-mcp",
+      "env": {
+        "MITE_ACCOUNT_NAME": "your-account-name",
+        "MITE_API_KEY": "your-api-key"
+      }
+    }
+  }
+}
 ```
 
 ## API Documentation

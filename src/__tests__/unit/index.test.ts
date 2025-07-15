@@ -13,6 +13,33 @@ vi.mock('@modelcontextprotocol/sdk/server/stdio.js', () => ({
   StdioServerTransport: vi.fn(),
 }));
 
+vi.mock('@modelcontextprotocol/sdk/server/streamableHttp.js', () => ({
+  StreamableHTTPServerTransport: vi.fn(),
+}));
+
+vi.mock('commander', () => ({
+  Command: vi.fn().mockImplementation(() => ({
+    name: vi.fn().mockReturnThis(),
+    description: vi.fn().mockReturnThis(),
+    version: vi.fn().mockReturnThis(),
+    option: vi.fn().mockReturnThis(),
+    parse: vi.fn(),
+    opts: vi.fn().mockReturnValue({
+      http: false,
+      port: '3000',
+      host: 'localhost',
+    }),
+  })),
+}));
+
+vi.mock('node:http', () => ({
+  createServer: vi.fn(),
+}));
+
+vi.mock('node:crypto', () => ({
+  randomUUID: vi.fn().mockReturnValue('test-uuid-123'),
+}));
+
 // Mock our modules
 vi.mock('../../utils/config.js', () => ({
   getConfigFromEnv: vi.fn(),
@@ -139,7 +166,7 @@ describe('MCP Server', () => {
     expect(Server).toHaveBeenCalledWith(
       {
         name: 'mite-mcp',
-        version: '0.1.1',
+        version: '0.1.2',
       },
       {
         capabilities: {
