@@ -127,21 +127,26 @@ describe('MCP Server', () => {
   });
 
   it('should exit with error when configuration is invalid', async () => {
+    // Mock console.error before mocking the module
+    const mockConsoleError = vi.fn();
+    console.error = mockConsoleError;
+
     vi.doMock('../../utils/config.js', () => ({
       getConfigFromEnv: vi.fn().mockImplementation(() => {
         throw new Error('Invalid configuration');
       }),
     }));
 
+    // Import will trigger the main() function
     await import('../../index.js');
 
-    await new Promise(resolve => setTimeout(resolve, 10));
+    // Wait for async operations to complete
+    await new Promise(resolve => setTimeout(resolve, 50));
 
-    // biome-ignore lint/suspicious/noConsole: Testing console output
-    expect(console.error).toHaveBeenCalledWith('Configuration error:', 'Invalid configuration');
-    // biome-ignore lint/suspicious/noConsole: Testing console output
-    expect(console.error).toHaveBeenCalledWith(
-      expect.stringContaining('Please set the following environment variables:')
+    // Check that console.error was called with the configuration error
+    expect(mockConsoleError).toHaveBeenCalledWith('Configuration error:', 'Invalid configuration');
+    expect(mockConsoleError).toHaveBeenCalledWith(
+      '\nPlease set the following environment variables:'
     );
     expect(process.exit).toHaveBeenCalledWith(1);
   });

@@ -34,6 +34,7 @@ describe('Time Entries Tools', () => {
         user_id: 123,
         from: '2024-01-01',
         to: '2024-01-31',
+        limit: 500,
       });
       expect(result).toEqual({ entries: mockEntries, grouped: false });
     });
@@ -58,6 +59,31 @@ describe('Time Entries Tools', () => {
         entries: mockGroupedEntries,
         grouped: true,
         group_by: 'user',
+      });
+    });
+
+    it('should return warning when hitting limit', async () => {
+      // Create exactly 500 entries to trigger the warning
+      const mockEntries: TimeEntry[] = Array(500)
+        .fill(null)
+        .map((_, i) => ({
+          id: i + 1,
+          minutes: 60,
+          note: `Entry ${i + 1}`,
+        }));
+
+      vi.spyOn(apiClient, 'get').mockResolvedValueOnce(mockEntries);
+
+      const result = await tools.listTimeEntries.execute({
+        from: '2024-01-01',
+        to: '2024-12-31',
+      });
+
+      expect(result).toEqual({
+        entries: mockEntries,
+        grouped: false,
+        warning:
+          'Result set limited to 500 entries. Use more specific filters (user_id, project_id, customer_id) to see all relevant entries.',
       });
     });
   });
@@ -166,6 +192,34 @@ describe('Time Entries Tools', () => {
 
       expect(apiClient.delete).toHaveBeenCalledWith('/time_entries/123.json');
       expect(result).toEqual({ success: true, id: 123 });
+    });
+  });
+
+  describe('getTimeEntrySummary', () => {
+    it('should get time entry summary grouped by customer', async () => {
+      const mockGroupedEntries: GroupedTimeEntry[] = [
+        { minutes: 480, customer_id: 1, customer_name: 'Customer A' },
+        { minutes: 360, customer_id: 2, customer_name: 'Customer B' },
+      ];
+
+      vi.spyOn(apiClient, 'get').mockResolvedValueOnce(mockGroupedEntries);
+
+      const result = await tools.getTimeEntrySummary.execute({
+        group_by: 'customer',
+        from: '2024-01-01',
+        to: '2024-01-31',
+      });
+
+      expect(apiClient.get).toHaveBeenCalledWith('/time_entries.json?group_by=customer', {
+        from: '2024-01-01',
+        to: '2024-01-31',
+      });
+      expect(result).toEqual({
+        entries: mockGroupedEntries,
+        grouped: true,
+        group_by: 'customer',
+        summary: 'Time entries grouped by customer',
+      });
     });
   });
 });

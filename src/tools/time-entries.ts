@@ -49,6 +49,16 @@ const getDailyTimeEntriesSchema = z.object({
   at: z.string().optional().describe('Date in YYYY-MM-DD format'),
 });
 
+const getTimeEntrySummarySchema = z.object({
+  group_by: z.enum(['customer', 'project', 'service', 'user']),
+  from: z.string().optional(),
+  to: z.string().optional(),
+  user_id: optionalNumber,
+  customer_id: optionalNumber,
+  project_id: optionalNumber,
+  service_id: optionalNumber,
+});
+
 const getTimeEntrySchema = z.object({
   id: requiredNumber,
 });
@@ -61,17 +71,33 @@ export function createTimeEntriesTools(apiClient: MiteApiClient) {
   return {
     listTimeEntries: {
       name: 'list_time_entries',
-      description: 'List time entries with optional filters',
+      description:
+        "List time entries with filters. IMPORTANT: Always use specific filters when available (user_id, project_id, customer_id) to avoid large result sets. When a user mentions a specific person, project, or customer, include those IDs as filters. Use getDailyTimeEntries for current user's today entries. To see totals by customer/project/user, use group_by parameter (e.g., group_by: 'customer' or 'project' or 'user').",
       inputSchema: listTimeEntriesSchema,
       execute: async (input: z.infer<typeof listTimeEntriesSchema>) => {
-        const { group_by, ...params } = input;
+        const { group_by, limit, ...params } = input;
+
         const path = group_by ? `/time_entries.json?group_by=${group_by}` : '/time_entries.json';
 
         if (group_by) {
+          // When grouping, don't apply limit as we're getting aggregated totals
           const entries = await apiClient.get<GroupedTimeEntry[]>(path, params);
           return { entries, grouped: true, group_by };
         } else {
-          const entries = await apiClient.get<TimeEntry[]>(path, params);
+          // Apply a reasonable default limit if none specified for non-grouped queries
+          const effectiveLimit = limit || 500;
+          const queryParams = { ...params, limit: effectiveLimit };
+          const entries = await apiClient.get<TimeEntry[]>(path, queryParams);
+
+          // Warn if we hit the limit
+          if (entries.length === effectiveLimit) {
+            return {
+              entries,
+              grouped: false,
+              warning: `Result set limited to ${effectiveLimit} entries. Use more specific filters (user_id, project_id, customer_id) to see all relevant entries.`,
+            };
+          }
+
           return { entries, grouped: false };
         }
       },
@@ -79,7 +105,8 @@ export function createTimeEntriesTools(apiClient: MiteApiClient) {
 
     getDailyTimeEntries: {
       name: 'get_daily_time_entries',
-      description: 'Get time entries for today or a specific date for the current user',
+      description:
+        'Get time entries for today or a specific date for the current user. USE THIS for "my time entries" or when no specific user is mentioned.',
       inputSchema: getDailyTimeEntriesSchema,
       execute: async (input: z.infer<typeof getDailyTimeEntriesSchema>) => {
         const path = '/daily.json';
@@ -139,6 +166,24 @@ export function createTimeEntriesTools(apiClient: MiteApiClient) {
       execute: async (input: z.infer<typeof deleteTimeEntrySchema>) => {
         await apiClient.delete(`/time_entries/${input.id}.json`);
         return { success: true, id: input.id };
+      },
+    },
+
+    getTimeEntrySummary: {
+      name: 'get_time_entry_summary',
+      description:
+        'Get summarized/grouped time entries by customer, project, service, or user. Use this when you need totals or summaries rather than individual entries.',
+      inputSchema: getTimeEntrySummarySchema,
+      execute: async (input: z.infer<typeof getTimeEntrySummarySchema>) => {
+        const { group_by, ...params } = input;
+        const path = `/time_entries.json?group_by=${group_by}`;
+        const entries = await apiClient.get<GroupedTimeEntry[]>(path, params);
+        return {
+          entries,
+          grouped: true,
+          group_by,
+          summary: `Time entries grouped by ${group_by}`,
+        };
       },
     },
   };
