@@ -187,6 +187,11 @@ For development testing with Claude Desktop, you can also use:
 }
 ```
 
+You can also run directly from the CLI like this:
+```bash
+export MITE_ACCOUNT_NAME=<your-account-name> && export MITE_API_KEY=<your api key> && npx @marceloemmerich/mite-mcp --http --port 3000
+```
+
 ## Development
 
 ```bash
