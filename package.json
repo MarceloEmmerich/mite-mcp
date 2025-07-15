@@ -1,6 +1,6 @@
 {
   "name": "@marceloemmerich/mite-mcp",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Model Context Protocol server for mite time tracking API",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
