@@ -61,17 +61,33 @@ export function createTimeEntriesTools(apiClient: MiteApiClient) {
   return {
     listTimeEntries: {
       name: 'list_time_entries',
-      description: 'List time entries with optional filters',
+      description:
+        "List time entries with filters. IMPORTANT: Always use specific filters when available (user_id, project_id, customer_id) to avoid large result sets. When a user mentions a specific person, project, or customer, include those IDs as filters. Use getDailyTimeEntries for current user's today entries.",
       inputSchema: listTimeEntriesSchema,
       execute: async (input: z.infer<typeof listTimeEntriesSchema>) => {
-        const { group_by, ...params } = input;
+        const { group_by, limit, ...params } = input;
+
+        // Apply a reasonable default limit if none specified
+        const effectiveLimit = limit || 500;
+        const queryParams = { ...params, limit: effectiveLimit };
+
         const path = group_by ? `/time_entries.json?group_by=${group_by}` : '/time_entries.json';
 
         if (group_by) {
-          const entries = await apiClient.get<GroupedTimeEntry[]>(path, params);
+          const entries = await apiClient.get<GroupedTimeEntry[]>(path, queryParams);
           return { entries, grouped: true, group_by };
         } else {
-          const entries = await apiClient.get<TimeEntry[]>(path, params);
+          const entries = await apiClient.get<TimeEntry[]>(path, queryParams);
+
+          // Warn if we hit the limit
+          if (entries.length === effectiveLimit) {
+            return {
+              entries,
+              grouped: false,
+              warning: `Result set limited to ${effectiveLimit} entries. Use more specific filters (user_id, project_id, customer_id) to see all relevant entries.`,
+            };
+          }
+
           return { entries, grouped: false };
         }
       },
@@ -79,7 +95,8 @@ export function createTimeEntriesTools(apiClient: MiteApiClient) {
 
     getDailyTimeEntries: {
       name: 'get_daily_time_entries',
-      description: 'Get time entries for today or a specific date for the current user',
+      description:
+        'Get time entries for today or a specific date for the current user. USE THIS for "my time entries" or when no specific user is mentioned.',
       inputSchema: getDailyTimeEntriesSchema,
       execute: async (input: z.infer<typeof getDailyTimeEntriesSchema>) => {
         const path = '/daily.json';
