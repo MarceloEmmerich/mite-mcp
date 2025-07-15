@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(rm:*)",
+      "Bash(mv:*)",
+      "Bash(grep:*)",
+      "Bash(mkdir:*)",
+      "Bash(ls:*)",
+      "Bash(git add:*)",
+      "WebFetch(domain:github.com)",
+      "Bash(find:*)",
+      "Bash(sed:*)",
+      "Bash(git commit:*)",
+      "WebFetch(domain:docs.anthropic.com)"
+    ]
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": ["task-master-ai", "context7"]
+}

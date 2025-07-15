@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "mite": {
+      "command": "npx",
+      "args": ["@marceloemmerich/mite-mcp"],
+      "env": {
+        "MITE_ACCOUNT_NAME": "your-account-name",
+        "MITE_API_KEY": "your-api-key"
+      }
+    }
+  }
+}
