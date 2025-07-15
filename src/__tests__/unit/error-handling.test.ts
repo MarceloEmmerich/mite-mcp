@@ -21,7 +21,7 @@ describe('Error Handling', () => {
       };
 
       let body = '';
-      req.on('data', chunk => {
+      req.on('data', (chunk: string) => {
         body += chunk;
       });
       req.on('end', () => {

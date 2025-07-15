@@ -2,6 +2,8 @@
 
 Model Context Protocol server for the mite time tracking API.
 
+[**mite**](https://mite.de/) – Simple time tracking for teams
+
 ## Prerequisites
 
 - Node.js 18+

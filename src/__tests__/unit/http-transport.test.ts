@@ -31,12 +31,6 @@ vi.mock('@modelcontextprotocol/sdk/server/streamableHttp.js', () => ({
   })),
 }));
 
-// Import the functions we want to test
-const _setupServer = vi.fn(async () => ({
-  connect: vi.fn(),
-  setRequestHandler: vi.fn(),
-}));
-
 // biome-ignore lint/suspicious/noExplicitAny: Mock function parameters
 const runHttpServer = vi.fn(async (server: any, options: any) => {
   const httpServer = createServer();
@@ -263,7 +257,9 @@ describe('HTTP Transport', () => {
       // Simulate session initialization
       const initCallback = vi.mocked(StreamableHTTPServerTransport).mock.calls[0][0]
         .onsessioninitialized;
-      initCallback('test-session-id');
+      if (initCallback) {
+        initCallback('test-session-id');
+      }
 
       // Now make request with session ID
       const req2 = mockReq('POST', '/', { 'mcp-session-id': 'test-session-id' });
@@ -287,7 +283,9 @@ describe('HTTP Transport', () => {
       // Simulate session initialization
       const initCallback = vi.mocked(StreamableHTTPServerTransport).mock.calls[0][0]
         .onsessioninitialized;
-      initCallback('test-session-id');
+      if (initCallback) {
+        initCallback('test-session-id');
+      }
 
       // Now make GET request
       const req = mockReq('GET', '/', { 'mcp-session-id': 'test-session-id' });
@@ -318,7 +316,9 @@ describe('HTTP Transport', () => {
       // Simulate session initialization
       const initCallback = vi.mocked(StreamableHTTPServerTransport).mock.calls[0][0]
         .onsessioninitialized;
-      initCallback('test-session-id');
+      if (initCallback) {
+        initCallback('test-session-id');
+      }
 
       // Now make DELETE request
       const req = mockReq('DELETE', '/', { 'mcp-session-id': 'test-session-id' });
@@ -377,7 +377,6 @@ describe('HTTP Transport', () => {
         ?.sessionIdGenerator;
       if (sessionIdGenerator) {
         const id1 = sessionIdGenerator();
-        const _id2 = sessionIdGenerator();
         expect(id1).toBe('test-uuid-123');
         expect(randomUUID).toHaveBeenCalled();
       }

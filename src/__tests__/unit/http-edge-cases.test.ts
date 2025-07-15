@@ -17,11 +17,6 @@ describe('HTTP Edge Cases', () => {
       // Set transport to null
       transports.set(sessionId, null);
 
-      const _req = {
-        method: 'GET',
-        headers: { 'mcp-session-id': sessionId },
-      };
-
       const res = {
         writeHead: vi.fn(),
         end: vi.fn(),
@@ -51,11 +46,6 @@ describe('HTTP Edge Cases', () => {
 
       // Set transport to null
       transports.set(sessionId, null);
-
-      const _req = {
-        method: 'DELETE',
-        headers: { 'mcp-session-id': sessionId },
-      };
 
       const res = {
         writeHead: vi.fn(),
