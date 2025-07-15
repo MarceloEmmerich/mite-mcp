@@ -133,6 +133,7 @@ npx @marceloemmerich/mite-mcp --http --port 8080 --host 0.0.0.0
 - `GET /` - Establishes SSE stream (requires Mcp-Session-Id header)
 - `DELETE /` - Terminates session (requires Mcp-Session-Id header)
 
+
 ### CLI Options
 
 ```bash
