@@ -2,10 +2,7 @@
 
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
-import { 
-  ListToolsRequestSchema, 
-  CallToolRequestSchema 
-} from '@modelcontextprotocol/sdk/types.js';
+import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 import { z } from 'zod';
 import { createCustomersTools } from './tools/customers.js';
 import { createProjectsTools } from './tools/projects.js';
@@ -17,19 +14,27 @@ import { getConfigFromEnv } from './utils/config.js';
 
 async function main() {
   // Load .env file in development
-  if (process.env.NODE_ENV !== 'production') {
+  if (process.env.NODE_ENV !== 'production' && process.env.NODE_ENV !== 'test') {
     try {
       // Temporarily capture stdout to suppress dotenv output
       const originalWrite = process.stdout.write;
       process.stdout.write = () => true;
-      
+
       const dotenv = await import('dotenv');
       dotenv.config();
-      
+
       // Restore stdout
       process.stdout.write = originalWrite;
     } catch {
       // dotenv is optional in production
+    }
+  } else if (process.env.NODE_ENV === 'test') {
+    // In test environment, load dotenv without capturing output
+    try {
+      const dotenv = await import('dotenv');
+      dotenv.config();
+    } catch {
+      // dotenv is optional in test
     }
   }
   let config: ReturnType<typeof getConfigFromEnv>;
@@ -59,7 +64,7 @@ async function main() {
   const server = new Server(
     {
       name: 'mite-mcp',
-      version: '0.1.0',
+      version: '0.1.1',
     },
     {
       capabilities: {
@@ -83,7 +88,7 @@ async function main() {
   };
 
   // Create a mapping from tool names to tool objects
-  const toolsByName = new Map<string, any>();
+  const toolsByName = new Map<string, (typeof allTools)[keyof typeof allTools]>();
   Object.values(allTools).forEach(tool => {
     toolsByName.set(tool.name, tool);
   });

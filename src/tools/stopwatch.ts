@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import type { TimeEntry } from '../types/index.js';
 import type { MiteApiClient } from '../utils/api-client.js';
+import { optionalNumber, requiredNumber } from '../utils/validation.js';
 
 interface StopwatchStatus {
   tracking_time_entry?: TimeEntry & {
@@ -11,17 +12,17 @@ interface StopwatchStatus {
 }
 
 const startStopwatchSchema = z.object({
-  id: z.coerce.number().describe('ID of the time entry to start tracking'),
+  id: requiredNumber.describe('ID of the time entry to start tracking'),
 });
 
 const stopStopwatchSchema = z.object({
-  id: z.coerce.number().describe('ID of the time entry that is currently being tracked'),
+  id: requiredNumber.describe('ID of the time entry that is currently being tracked'),
 });
 
 const quickStartStopwatchSchema = z.object({
   note: z.string().optional(),
-  project_id: z.coerce.number().optional(),
-  service_id: z.coerce.number().optional(),
+  project_id: optionalNumber,
+  service_id: optionalNumber,
 });
 
 export function createStopwatchTools(apiClient: MiteApiClient) {

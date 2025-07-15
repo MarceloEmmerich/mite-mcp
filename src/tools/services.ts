@@ -1,38 +1,39 @@
 import { z } from 'zod';
 import type { Service } from '../types/index.js';
 import type { MiteApiClient } from '../utils/api-client.js';
+import { optionalBoolean, optionalNumber, requiredNumber } from '../utils/validation.js';
 
 const listServicesSchema = z.object({
   name: z.string().optional(),
-  limit: z.coerce.number().optional(),
-  page: z.coerce.number().optional(),
-  archived: z.coerce.boolean().optional(),
+  limit: optionalNumber,
+  page: optionalNumber,
+  archived: optionalBoolean,
 });
 
 const createServiceSchema = z.object({
   name: z.string(),
   note: z.string().optional(),
-  hourly_rate: z.coerce.number().optional(),
-  billable: z.coerce.boolean().optional(),
-  archived: z.coerce.boolean().optional(),
+  hourly_rate: optionalNumber,
+  billable: optionalBoolean,
+  archived: optionalBoolean,
 });
 
 const updateServiceSchema = z.object({
-  id: z.coerce.number(),
+  id: requiredNumber,
   name: z.string().optional(),
   note: z.string().optional(),
-  hourly_rate: z.coerce.number().optional(),
-  billable: z.coerce.boolean().optional(),
-  archived: z.coerce.boolean().optional(),
-  update_hourly_rate_on_time_entries: z.coerce.boolean().optional(),
+  hourly_rate: optionalNumber,
+  billable: optionalBoolean,
+  archived: optionalBoolean,
+  update_hourly_rate_on_time_entries: optionalBoolean,
 });
 
 const getServiceSchema = z.object({
-  id: z.coerce.number(),
+  id: requiredNumber,
 });
 
 const deleteServiceSchema = z.object({
-  id: z.coerce.number(),
+  id: requiredNumber,
 });
 
 export function createServicesTools(apiClient: MiteApiClient) {

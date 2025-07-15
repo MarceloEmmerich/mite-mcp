@@ -1,18 +1,19 @@
 import { z } from 'zod';
 import type { GroupedTimeEntry, TimeEntry } from '../types/index.js';
 import type { MiteApiClient } from '../utils/api-client.js';
+import { optionalBoolean, optionalNumber, requiredNumber } from '../utils/validation.js';
 
 const listTimeEntriesSchema = z.object({
-  user_id: z.coerce.number().optional(),
-  customer_id: z.coerce.number().optional(),
-  project_id: z.coerce.number().optional(),
-  service_id: z.coerce.number().optional(),
+  user_id: optionalNumber,
+  customer_id: optionalNumber,
+  project_id: optionalNumber,
+  service_id: optionalNumber,
   from: z.string().optional(),
   to: z.string().optional(),
-  billable: z.coerce.boolean().optional(),
-  locked: z.coerce.boolean().optional(),
-  limit: z.coerce.number().optional(),
-  page: z.coerce.number().optional(),
+  billable: optionalBoolean,
+  locked: optionalBoolean,
+  limit: optionalNumber,
+  page: optionalNumber,
   group_by: z
     .enum(['customer', 'project', 'service', 'user', 'day', 'week', 'month', 'year'])
     .optional(),
@@ -20,35 +21,40 @@ const listTimeEntriesSchema = z.object({
 
 const createTimeEntrySchema = z.object({
   date_at: z.string().optional(),
-  minutes: z.coerce.number().optional(),
+  minutes: optionalNumber,
   note: z.string().optional(),
-  user_id: z.coerce.number().optional(),
-  project_id: z.coerce.number().optional(),
-  service_id: z.coerce.number().optional(),
-  locked: z.coerce.boolean().optional(),
+  user_id: optionalNumber,
+  project_id: optionalNumber,
+  service_id: optionalNumber,
+  locked: optionalBoolean,
 });
 
-const updateTimeEntrySchema = z.object({
-  id: z.coerce.number(),
-  date_at: z.string().optional(),
-  minutes: z.coerce.number().optional(),
-  note: z.string().optional(),
-  user_id: z.coerce.number().optional(),
-  project_id: z.coerce.number().optional(),
-  service_id: z.coerce.number().optional(),
-  locked: z.coerce.boolean().optional(),
-});
+const updateTimeEntrySchema = z
+  .object({
+    id: requiredNumber.optional(),
+    time_entry_id: requiredNumber.optional(),
+    date_at: z.string().optional(),
+    minutes: optionalNumber,
+    note: z.string().optional(),
+    user_id: optionalNumber,
+    project_id: optionalNumber,
+    service_id: optionalNumber,
+    locked: optionalBoolean,
+  })
+  .refine(data => data.id || data.time_entry_id, {
+    message: "Either 'id' or 'time_entry_id' must be provided",
+  });
 
 const getDailyTimeEntriesSchema = z.object({
   at: z.string().optional().describe('Date in YYYY-MM-DD format'),
 });
 
 const getTimeEntrySchema = z.object({
-  id: z.coerce.number(),
+  id: requiredNumber,
 });
 
 const deleteTimeEntrySchema = z.object({
-  id: z.coerce.number(),
+  id: requiredNumber,
 });
 
 export function createTimeEntriesTools(apiClient: MiteApiClient) {
@@ -114,9 +120,10 @@ export function createTimeEntriesTools(apiClient: MiteApiClient) {
       description: 'Update an existing time entry',
       inputSchema: updateTimeEntrySchema,
       execute: async (input: z.infer<typeof updateTimeEntrySchema>) => {
-        const { id, ...data } = input;
+        const { id, time_entry_id, ...data } = input;
+        const entryId = id || time_entry_id;
         const response = await apiClient.patch<{ time_entry: TimeEntry }>(
-          `/time_entries/${id}.json`,
+          `/time_entries/${entryId}.json`,
           {
             time_entry: data,
           }

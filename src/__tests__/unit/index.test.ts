@@ -85,10 +85,12 @@ describe('MCP Server', () => {
 
   beforeEach(() => {
     process.env = { ...originalEnv };
+    process.env.NODE_ENV = 'test';
     console.error = vi.fn();
     // biome-ignore lint/suspicious/noExplicitAny: Mock function
     process.exit = vi.fn() as any;
     vi.clearAllMocks();
+    vi.resetModules();
   });
 
   afterEach(() => {
@@ -98,10 +100,11 @@ describe('MCP Server', () => {
   });
 
   it('should exit with error when configuration is invalid', async () => {
-    const { getConfigFromEnv } = await import('../../utils/config.js');
-    vi.mocked(getConfigFromEnv).mockImplementation(() => {
-      throw new Error('Invalid configuration');
-    });
+    vi.doMock('../../utils/config.js', () => ({
+      getConfigFromEnv: vi.fn().mockImplementation(() => {
+        throw new Error('Invalid configuration');
+      }),
+    }));
 
     await import('../../index.js');
 
@@ -117,24 +120,16 @@ describe('MCP Server', () => {
   });
 
   it('should setup server with valid configuration', async () => {
-    const { getConfigFromEnv } = await import('../../utils/config.js');
-    const { MiteApiClient } = await import('../../utils/api-client.js');
-
-    vi.mocked(getConfigFromEnv).mockReturnValue({
-      accountName: 'test',
-      apiKey: 'test-key',
-    });
-
-    // biome-ignore lint/suspicious/noExplicitAny: Mock implementation
-    vi.mocked(MiteApiClient).mockImplementation(() => ({}) as any);
-
-    // Re-import to trigger the module execution
-    vi.resetModules();
-    vi.mock('../../utils/config.js', () => ({
+    vi.doMock('../../utils/config.js', () => ({
       getConfigFromEnv: vi.fn().mockReturnValue({
         accountName: 'test',
         apiKey: 'test-key',
       }),
+    }));
+
+    vi.doMock('../../utils/api-client.js', () => ({
+      // biome-ignore lint/suspicious/noExplicitAny: Mock implementation
+      MiteApiClient: vi.fn().mockImplementation(() => ({}) as any),
     }));
 
     await import('../../index.js');
@@ -144,7 +139,7 @@ describe('MCP Server', () => {
     expect(Server).toHaveBeenCalledWith(
       {
         name: 'mite-mcp',
-        version: '0.1.0',
+        version: '0.1.1',
       },
       {
         capabilities: {

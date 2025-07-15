@@ -1,59 +1,60 @@
 import { z } from 'zod';
 import type { Project } from '../types/index.js';
 import type { MiteApiClient } from '../utils/api-client.js';
+import { optionalBoolean, optionalNumber, requiredNumber } from '../utils/validation.js';
 
 const listProjectsSchema = z.object({
   name: z.string().optional(),
-  customer_id: z.coerce.number().optional(),
-  limit: z.coerce.number().optional(),
-  page: z.coerce.number().optional(),
-  archived: z.coerce.boolean().optional(),
+  customer_id: optionalNumber,
+  limit: optionalNumber,
+  page: optionalNumber,
+  archived: optionalBoolean,
 });
 
 const createProjectSchema = z.object({
   name: z.string(),
   note: z.string().optional(),
-  customer_id: z.coerce.number().optional(),
-  budget: z.coerce.number().optional(),
+  customer_id: optionalNumber,
+  budget: optionalNumber,
   budget_type: z.string().optional(),
-  archived: z.coerce.boolean().optional(),
-  hourly_rate: z.coerce.number().optional(),
+  archived: optionalBoolean,
+  hourly_rate: optionalNumber,
   hourly_rates_per_service: z
     .array(
       z.object({
-        service_id: z.coerce.number(),
-        hourly_rate: z.coerce.number(),
+        service_id: requiredNumber,
+        hourly_rate: requiredNumber,
       })
     )
     .optional(),
 });
 
 const updateProjectSchema = z.object({
-  id: z.coerce.number(),
+  id: requiredNumber,
   name: z.string().optional(),
   note: z.string().optional(),
-  customer_id: z.coerce.number().optional(),
-  budget: z.coerce.number().optional(),
+  customer_id: optionalNumber,
+  budget: optionalNumber,
   budget_type: z.string().optional(),
-  archived: z.coerce.boolean().optional(),
-  hourly_rate: z.coerce.number().optional(),
+  archived: optionalBoolean,
+  hourly_rate: optionalNumber,
   hourly_rates_per_service: z
     .array(
       z.object({
-        service_id: z.coerce.number(),
-        hourly_rate: z.coerce.number(),
+        service_id: requiredNumber,
+        hourly_rate: requiredNumber,
       })
     )
     .optional(),
-  update_hourly_rate_on_time_entries: z.coerce.boolean().optional(),
+  update_hourly_rate_on_time_entries: optionalBoolean,
 });
 
 const getProjectSchema = z.object({
-  id: z.coerce.number(),
+  id: requiredNumber,
 });
 
 const deleteProjectSchema = z.object({
-  id: z.coerce.number(),
+  id: requiredNumber,
 });
 
 export function createProjectsTools(apiClient: MiteApiClient) {
